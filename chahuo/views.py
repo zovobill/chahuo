@@ -20,7 +20,7 @@ def chahuo(request):
 	company = request.GET.get('c', None)
 	# print('company=', company, 'keyword = ', keyword)
 	if not company or keyword == '': 
-		return HttpResponse('<span class="label label-default">查询出错</span>', content_type="text/plain")
+		return redirect('index')
 	n = request.GET.get('n', '0')
 	num = parseInt(n)
 	hash_str = '_'.join([company, keyword, str(datetime.datetime.now())])
