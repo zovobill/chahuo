@@ -1,11 +1,10 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core import serializers
 from django.http import JsonResponse
 from .models import StockQueryRecord
 import logging, json, datetime, hashlib, time
-import pymssql
 
 logger = logging.getLogger(__name__)
 DEFAULT_NUM = 30
@@ -73,10 +72,10 @@ def parseInt(nstr):
 def chahuo_list(request):
 	company = request.POST.get('c', None)
 	if company is None: 
-		return render(request, 'index.html')
+		return redirect('index')
 	com_sn = request.POST.get('sn', None)
 	if com_sn is None  or com_sn != COMPANY_SNS.get(company, ''):
-		return render(request, 'index.html')
+		return redirect('index')
 
 	qset = model.objects.filter(company__iexact = company, result_status__iexact = None)
 	# print('qset:', qset)
@@ -88,26 +87,22 @@ def chahuo_list(request):
 def chahuo_result(request):
 	result = request.POST
 	hash_id = result.get('hash_id', None)
-
-	if hash_id is None:
-		return HttpResponse(json.dumps({'status': False, 'message':'response has no hash_id key.'}))
 	status = result.get('result_status', None)
-	if status is None:
-		return HttpResponse(json.dumps({'status': False, 'message':'fields of reslut has no result_status key.'}))
-	else:
-		try:
-			record = model.objects.get(hash_id = hash_id)
-			# print('record:',record)
-			if record is None:
-				return HttpResponse(json.dumps({'status': False, 'message':'db has no record like it.'}))
+	if hash_id is None or status is None:
+		return redirect('index')
+	try:
+		record = model.objects.get(hash_id = hash_id)
+		# print('record:',record)
+		if record is None:
+			return JsonResponse({'status': False, 'message':'db has no record like it.'}, content_type="text/plain")
 
-			record.result_status = status
-			record.save()
-			print('hash_id:{} item:{} record has been got and been saved.'.format(record.hash_id, record.item))
-			return HttpResponse(json.dumps({'status': True, 'message':'reslut has been got and saved to db'}))
-		except:
-			print('some error raised in db')
-			return HttpResponse(json.dumps({'status': False, 'message':'some error raised in getting result or saving with db'}))
+		record.result_status = status
+		record.save()
+		print('hash_id:{} item:{} record has been got and been saved.'.format(record.hash_id, record.item))
+		return JsonResponse({'status': True, 'message':'reslut has been got and saved to db'}, content_type="text/plain")
+	except:
+		print('some error raised in db')
+		return JsonResponse({'status': False, 'message':'some error raised in getting result or saving to db'}, content_type="text/plain")
 
 
 
