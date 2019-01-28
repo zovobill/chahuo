@@ -20,4 +20,5 @@ urlpatterns = [
     path('', index, name = 'index'),
     path('chahuo_list/', chahuo_list, name = 'chahuo_list'),
     path('chahuo_result/', chahuo_result, name = 'chahuo_result'),
+    # path('options/', options, name = 'options'),
 ]
