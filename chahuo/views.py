@@ -8,7 +8,7 @@ import logging, json, datetime, hashlib, time
 
 logger = logging.getLogger(__name__)
 DEFAULT_NUM = 30
-TIME_STEP = 0.3
+TIME_STEP = 0.23
 MAX_ROUND = 10
 DROP_CHARS = "*%~!@'#&?"
 COMPANY_SNS = {'dongnam':'dongnam',}
@@ -44,9 +44,9 @@ def chahuo(request):
 			if status == 0:
 				return HttpResponse('<span class="label label-default">无货或无此货号，请检查输入货号</span>', content_type="text/plain")
 			elif status == 1:
-				return HttpResponse('<span class="label label-warning">缺货，{} 库存小于 {} 卷</span>'.format(keyword, num), content_type="text/plain")
+				return HttpResponse('<span class="label label-warning">缺货，{} 库存小于 {} 卷，同批最大库存为 {} 卷</span>'.format(keyword, num, result.s_quantity), content_type="text/plain")
 			elif status >= 2:
-				return HttpResponse('<span class="label label-success">有货，{} 库存大于 {} 卷</span>'.format(keyword, num), content_type="text/plain")
+				return HttpResponse('<span class="label label-success">有货，{} 库存大于 {} 卷，同批最大库存为 {} 卷</span>'.format(keyword, num, result.s_quantity), content_type="text/plain")
 		n += 1
 	return HttpResponse('<span class="label label-default">查询超时或出错，请电话联系东南墙纸</span>', content_type="text/plain")
 
@@ -88,6 +88,7 @@ def chahuo_result(request):
 	result = request.POST
 	hash_id = result.get('hash_id', None)
 	status = result.get('result_status', None)
+	s_quantity = result.get('s_quantity', None)
 	if hash_id is None or status is None:
 		return redirect('index')
 	try:
@@ -97,6 +98,7 @@ def chahuo_result(request):
 			return JsonResponse({'status': False, 'message':'db has no record like it.'}, content_type="text/plain")
 
 		record.result_status = status
+		record.s_quantity = s_quantity
 		record.save()
 		print('hash_id:{} item:{} record has been got and been saved.'.format(record.hash_id, record.item))
 		return JsonResponse({'status': True, 'message':'reslut has been got and saved to db'}, content_type="text/plain")
